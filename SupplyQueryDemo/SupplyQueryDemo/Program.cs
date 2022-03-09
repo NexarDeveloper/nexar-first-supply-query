@@ -15,6 +15,8 @@ query Search($mpn: String!) {
   }
 }";
 
+using HttpClient supplyClient = SupplyClient.CreateClient();
+
 while (true)
 {
     // prompt for an MPN to search
@@ -23,7 +25,8 @@ while (true)
     if (string.IsNullOrEmpty(mpn))
         return;
 
-    using HttpClient supplyClient = await SupplyClient.GetClientAsync();
+    // populate or replace the supply token
+    await supplyClient.PopulateTokenAsync();
 
     // run the query
     Request request = new()
@@ -31,7 +34,6 @@ while (true)
         Query = Query,
         Variables = new Dictionary<string, object> { { "mpn", mpn } }
     };
-
     Response result = await supplyClient.RunQueryAsync(request);
 
     // check if no results

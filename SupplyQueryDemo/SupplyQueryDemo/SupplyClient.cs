@@ -18,9 +18,20 @@ namespace SupplyQueryDemo
         private static string? token = null;
         private static DateTime tokenExpiresAt = DateTime.MinValue;
 
-        internal static async Task<HttpClient> GetClientAsync()
+        internal static HttpClient CreateClient()
         {
-            // get an access token, or get a new one if it expired
+            // create and configure the supply client
+            HttpClient supplyClient = new()
+            {
+                BaseAddress = new Uri("https://api.nexar.com/graphql")
+            };
+
+            return supplyClient;
+        }
+
+        internal static async Task PopulateTokenAsync(this HttpClient supplyClient)
+        {
+            // get an access token, replacing the existing one if it has expired
             if (token == null || DateTime.UtcNow >= tokenExpiresAt)
             {
                 tokenExpiresAt = DateTime.UtcNow + tokenLifetime;
@@ -28,17 +39,8 @@ namespace SupplyQueryDemo
                 token = await authClient.GetNexarTokenAsync(clientId, clientSecret);
             }
 
-            // create and configure the supply client
-            HttpClient supplyClient = new()
-            {
-                BaseAddress = new Uri("https://api.nexar.com/graphql"),
-                DefaultRequestHeaders =
-                {
-                    Authorization = new AuthenticationHeaderValue("Bearer", token)
-                }
-            };
-
-            return supplyClient;
+            // set the default Authorization header so it includes the token
+            supplyClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         }
 
         internal static async Task<Response> RunQueryAsync(this HttpClient supplyClient, Request request)
