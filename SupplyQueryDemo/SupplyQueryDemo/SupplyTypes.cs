@@ -6,6 +6,9 @@ namespace SupplyQueryDemo
     {
         [JsonProperty("query")]
         public string? Query { get; set; }
+
+        [JsonProperty("variables")]
+        public Dictionary<string, object>? Variables { get; set; }
     }
 
     internal class Response

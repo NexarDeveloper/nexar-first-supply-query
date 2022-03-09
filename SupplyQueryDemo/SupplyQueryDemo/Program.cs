@@ -1,19 +1,19 @@
 ﻿using SupplyQueryDemo;
 
-const string QueryTemplate = @"
-query Search {{
-  supSearchMpn(q: ""{0}"", limit: 2) {{
-    results {{
-      part {{
+const string Query = @"
+query Search($mpn: String!) {
+  supSearchMpn(q: $mpn, limit: 2) {
+    results {
+      part {
         mpn
         shortDescription
-        manufacturer {{
+        manufacturer {
           name
-        }}
-      }}
-    }}
-  }}
-}}";
+        }
+      }
+    }
+  }
+}";
 
 while (true)
 {
@@ -25,11 +25,13 @@ while (true)
 
     using HttpClient supplyClient = await SupplyClient.GetClientAsync();
 
-    // substitute the MPN into the query
-    string query = string.Format(QueryTemplate, mpn);
-
     // run the query
-    Request request = new() { Query = query };
+    Request request = new()
+    {
+        Query = Query,
+        Variables = new Dictionary<string, object> { { "mpn", mpn } }
+    };
+
     Response result = await supplyClient.RunQueryAsync(request);
 
     if (result.Data?.SupSearchMpn?.Results == null)
