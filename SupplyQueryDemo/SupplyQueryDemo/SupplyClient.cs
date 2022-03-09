@@ -43,6 +43,8 @@ namespace SupplyQueryDemo
 
         internal static async Task<Response> RunQueryAsync(this HttpClient supplyClient, Request request)
         {
+            // for another way of running GraphQL queries, see the related demo at:
+            // https://github.com/NexarDeveloper/nexar-templates/tree/main/nexar-console-supply
             string requestString = JsonConvert.SerializeObject(request);
             HttpResponseMessage httResponse = await supplyClient.PostAsync(supplyClient.BaseAddress, new StringContent(requestString, Encoding.UTF8, "application/json"));
             httResponse.EnsureSuccessStatusCode();

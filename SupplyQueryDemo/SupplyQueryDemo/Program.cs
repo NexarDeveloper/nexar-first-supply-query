@@ -34,8 +34,11 @@ while (true)
 
     Response result = await supplyClient.RunQueryAsync(request);
 
-    if (result.Data?.SupSearchMpn?.Results == null)
+    // check if no results
+    if (result.Data?.SupSearchMpn?.Results == null || result.Data.SupSearchMpn.Results.Count == 0)
     {
+        Console.WriteLine("Sorry, no parts found");
+        Console.WriteLine();
         continue;
     }
 
