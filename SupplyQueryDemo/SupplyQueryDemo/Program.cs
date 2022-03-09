@@ -29,7 +29,8 @@ while (true)
     string query = string.Format(QueryTemplate, mpn);
 
     // run the query
-    Response result = await supplyClient.RunQueryAsync(query);
+    Request request = new() { Query = query };
+    Response result = await supplyClient.RunQueryAsync(request);
 
     if (result.Data?.SupSearchMpn?.Results == null)
     {

@@ -45,9 +45,10 @@ namespace SupplyQueryDemo
             return supplyClient;
         }
 
-        internal static async Task<Response> RunQueryAsync(this HttpClient supplyClient, string query)
+        internal static async Task<Response> RunQueryAsync(this HttpClient supplyClient, Request request)
         {
-            HttpResponseMessage httResponse = await supplyClient.PostAsync(supplyClient.BaseAddress, new StringContent(query, Encoding.UTF8, "application/json"));
+            string requestString = JsonConvert.SerializeObject(request);
+            HttpResponseMessage httResponse = await supplyClient.PostAsync(supplyClient.BaseAddress, new StringContent(requestString, Encoding.UTF8, "application/json"));
             httResponse.EnsureSuccessStatusCode();
             string responseString = await httResponse.Content.ReadAsStringAsync();
             Response response = JsonConvert.DeserializeObject<Response>(responseString);

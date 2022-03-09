@@ -2,6 +2,12 @@
 
 namespace SupplyQueryDemo
 {
+    internal class Request
+    {
+        [JsonProperty("query")]
+        public string? Query { get; set; }
+    }
+
     internal class Response
     {
         [JsonProperty("data")]
