@@ -16,14 +16,14 @@ namespace SupplyQueryDemo
 
         private readonly string clientId;
         private readonly string clientSecret;
-        private readonly HttpClient innerClient;
+        private readonly HttpClient httpClient;
 
         public SupplyClient(string clientId, string clientSecret)
         {
             this.clientId = clientId;
             this.clientSecret = clientSecret;
 
-            innerClient = new HttpClient()
+            httpClient = new HttpClient()
             {
                 BaseAddress = new Uri("https://api.nexar.com/graphql")
             };
@@ -35,7 +35,7 @@ namespace SupplyQueryDemo
             // https://github.com/NexarDeveloper/nexar-templates/tree/main/nexar-console-supply
             await EnsureValidTokenAsync();
             string requestString = JsonConvert.SerializeObject(request);
-            HttpResponseMessage httResponse = await innerClient.PostAsync(innerClient.BaseAddress, new StringContent(requestString, Encoding.UTF8, "application/json"));
+            HttpResponseMessage httResponse = await httpClient.PostAsync(httpClient.BaseAddress, new StringContent(requestString, Encoding.UTF8, "application/json"));
             httResponse.EnsureSuccessStatusCode();
             string responseString = await httResponse.Content.ReadAsStringAsync();
             Response response = JsonConvert.DeserializeObject<Response>(responseString);
@@ -53,12 +53,12 @@ namespace SupplyQueryDemo
             }
 
             // set the default Authorization header so it includes the token
-            innerClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         }
 
         public void Dispose()
         {
-            innerClient.Dispose();
+            httpClient.Dispose();
         }
     }
 }
