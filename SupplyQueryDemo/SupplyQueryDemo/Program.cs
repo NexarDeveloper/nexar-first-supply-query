@@ -15,7 +15,11 @@ query Search($mpn: String!) {
   }
 }";
 
-using HttpClient supplyClient = SupplyClient.CreateClient();
+// assume Nexar client ID and secret are set as environment variables
+string clientId = Environment.GetEnvironmentVariable("NEXAR_CLIENT_ID") ?? throw new InvalidOperationException("Please set environment variable 'NEXAR_CLIENT_ID'");
+string clientSecret = Environment.GetEnvironmentVariable("NEXAR_CLIENT_SECRET") ?? throw new InvalidOperationException("Please set environment variable 'NEXAR_CLIENT_SECRET'");
+
+using SupplyClient supplyClient = new(clientId, clientSecret);
 
 while (true)
 {
@@ -24,9 +28,6 @@ while (true)
     var mpn = Console.ReadLine();
     if (string.IsNullOrEmpty(mpn))
         return;
-
-    // populate or replace the supply token
-    await supplyClient.PopulateTokenAsync();
 
     // run the query
     Request request = new()
