@@ -27,7 +27,7 @@ const gqlQuery = `query Search($mpn: String!) {
   }`
 
 rl.on('line', async (MPN) => {
-    if (MPN === '') {
+    if (!MPN.length) {
         rl.close()
         return
     }
