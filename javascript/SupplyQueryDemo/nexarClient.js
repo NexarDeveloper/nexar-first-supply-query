@@ -53,11 +53,34 @@ scope = {
     'design': 'openid profile email design.domain user.access offline_access'
 }
 
+function launchBrowser(auth_request) {
+    switch(os.platform()) {
+        case 'win32':
+            return spawn('start', ['""', `"${auth_request}"`], { 'shell': true })
+        case 'darwin':
+            return spawn('open', [`"${auth_request}"`], { 'shell': true })
+        default:
+            return spawn('xdg-open', [`"${auth_request}"`], { 'shell': true })
+    }
+}
+
+function decodeJWT(jwt) {
+    return JSON.parse(
+        Buffer.from(
+            jwt.split('.')[1]
+            .replace('-', '+')
+            .replace('_', '/'),
+            'base64'
+        ).toString('binary')
+    )
+}
+
 class NexarClient {
     #accessToken
     #id
     #secret
     #scope
+    #exp
     hostName = 'api.nexar.com'
 
     constructor(id, secret, scope = 'supply.domain') {
@@ -95,17 +118,6 @@ class NexarClient {
             req.write(data)
             req.end()
         })
-    }
-
-    #launchBrowser(auth_request) {
-        switch(os.platform()) {
-            case 'win32':
-                return spawn('start', ['""', `"${auth_request}"`], { 'shell': true })
-            case 'darwin':
-                return spawn('open', [`"${auth_request}"`], { 'shell': true })
-            default:
-                return spawn('xdg-open', [`"${auth_request}"`], { 'shell': true })
-        }
     }
 
     #getUserAuthCode(id, code_challenge, scope) {      
@@ -151,9 +163,8 @@ class NexarClient {
                 } 
             })
 
-            client = this.#launchBrowser(auth_request.href)
+            client = launchBrowser(auth_request.href)
         })
-
     }
 
     #getAccessTokenFromCode(id, secret, code_verifier, code) {
@@ -230,40 +241,36 @@ class NexarClient {
                 'scope': this.#scope
             })
 
-            this.#accessToken = this.#getRequest(options, data.toString())
+            return this.#getRequest(options, data.toString())
         }
 
-        this.#accessToken = this.#getAccessToken(this.#id, this.#secret, this.#scope)
+        return this.#getAccessToken(this.#id, this.#secret, this.#scope)
     }
 
-    #checkTokenExp(token) {
-        let decodeJWT = (jwt) =>
-            JSON.parse(
-                Buffer.from(
-                    jwt.split('.')[1]
-                    .replace('-', '+')
-                    .replace('_', '/'),
-                    'base64'
-                ).toString('binary')
-            )
+    #checkTokenExp() {
+        this.#exp = this.#exp ||
+            this.#accessToken.then(token => { return decodeJWT(token.access_token)?.exp })
 
-        let jwt = decodeJWT(token.access_token)
-        let now = new Date()
-        now.setMinutes(now.getMinutes() + 5)
-    
-        if ((jwt.exp * 1000) < now.getTime()) {
-            //token is expired ... or will be in less than 5 minutes
-            this.#refreshToken(token)
-        }
-    
-        return this.#accessToken
+        return this.#exp
+            .then(exp => {
+                let now = new Date()
+                now.setMinutes(now.getMinutes() + 5)
+            
+                if ((exp * 1000) < now.getTime()) {
+                    //token is expired ... or will be in less than 5 minutes
+                    this.#exp = undefined
+                    return this.#accessToken
+                        .then(token => {return this.#refreshToken(token)})
+                }
+
+                return this.#accessToken
+            })
     }
     
     query(gqlQuery, variables) {
         this.#accessToken = this.#accessToken || this.#getAccessToken(this.#id, this.#secret, this.#scope)
 
-        return this.#accessToken
-            .then(token => { return this.#checkTokenExp(token) })
+        return this.#checkTokenExp()
             .then(token => {
                 const options = {
                     hostname: this.hostName,
