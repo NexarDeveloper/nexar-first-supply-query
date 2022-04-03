@@ -296,7 +296,7 @@ class NexarClient {
      * @async
      * @generator
      * @param {string} pageKey - graphQL variable name for setting the cursor: desProjects(after: $pageKey).
-     * @param {function} pageSelect - return from data response the type with node interface: (data) => data.desProjects
+     * @param {function} pageSelect - return from response the type with node interface: (data) => data.desProjects
      * @yields {object} - a page of the graphQL Type implementing a node interface
      */
 
