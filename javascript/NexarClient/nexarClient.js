@@ -44,14 +44,17 @@ nexarPage = (title, message) => `
     </body>
     </html>
     `
-
-REDIRECT_URI = 'http://localhost:3000/login';
-AUTHORITY_URL = 'https://identity.nexar.com/connect/authorize';
-
-scope = {
-    'supply': 'supply.domain',
-    'design': 'openid profile email design.domain user.access offline_access'
+const TOKEN_OPTIONS = {
+    hostname: 'identity.nexar.com',
+    path: '/connect/token',
+    method: 'POST',
+    headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+    }
 }
+const PORT = 3000
+const REDIRECT_URI = `http://localhost:${PORT}/login`;
+const AUTHORITY_URL = 'https://identity.nexar.com/connect/authorize';
 
 function launchBrowser(auth_request) {
     switch(os.platform()) {
@@ -75,50 +78,63 @@ function decodeJWT(jwt) {
     )
 }
 
+function getRequest(options, data) {
+    return new Promise((resolve, reject) => {
+        let req = https.request(options, res => {
+            const contentType = res.headers['content-type'];
+        
+            let error;
+            if (res.statusCode !== 200) {
+                error = new Error('Request Failed.\n' +
+                    `Status Code: ${res.statusCode} ${res.statusMessage}`)
+            } else if (!/^application\/json/.test(contentType)) {
+                error = new Error('Invalid content-type.\n' +
+                    `Expected application/json but received ${contentType}`)
+            }
+            if (error) {
+                console.error(error.message)
+                // Consume response data to free up memory
+                res.resume()
+                return
+            }
+        
+            let rawData = '';
+            res.setEncoding('utf8');
+            res.on('data', (chunk) => rawData += chunk );
+            res.on('end', () => resolve(JSON.parse(rawData)));
+        })
+        req.on('error', (err) => reject(err));
+        req.write(data)
+        req.end()
+    })
+}
+
 class NexarClient {
     #accessToken
+    #exp
     #id
     #secret
     #scope
-    #exp
     hostName = 'api.nexar.com'
+    static scopes = {
+        'supply': 'supply.domain',
+        'design': 'openid profile email design.domain user.access offline_access'
+    }
+        
+    /**
+     * Client for the Nexar API to manage authorization and requests.
+     * @param {string} id - the client id assigned to a Nexar application.
+     * @param {string} secret - the client secret assigned to a Nexar application.
+     * @param {string} [scope] - the resources required for authorization
+     */
 
-    constructor(id, secret, scope = 'supply.domain') {
+    constructor(id, secret, scope = NexarClient.scopes.supply) {
         this.#id = id
         this.#secret = secret
         this.#scope = scope
     }
 
-    #getRequest(options, data) {
-        return new Promise((resolve, reject) => {
-            let req = https.request(options, res => {
-                const contentType = res.headers['content-type'];
-            
-                let error;
-                if (res.statusCode !== 200) {
-                    error = new Error('Request Failed.\n' +
-                        `Status Code: ${res.statusCode} ${res.statusMessage}`)
-                } else if (!/^application\/json/.test(contentType)) {
-                    error = new Error('Invalid content-type.\n' +
-                        `Expected application/json but received ${contentType}`)
-                }
-                if (error) {
-                    console.error(error.message)
-                    // Consume response data to free up memory
-                    res.resume()
-                    return
-                }
-            
-                let rawData = '';
-                res.setEncoding('utf8');
-                res.on('data', (chunk) => rawData += chunk );
-                res.on('end', () => resolve(JSON.parse(rawData)));
-            })
-            req.on('error', (err) => reject(err));
-            req.write(data)
-            req.end()
-        })
-    }
+    set host(name) { this.hostName = name }
 
     #getUserAuthCode(id, code_challenge, scope) {      
         let auth_request = new URL(AUTHORITY_URL)
@@ -133,13 +149,14 @@ class NexarClient {
         })
         auth_request.search = auth_params.toString()
 
-        let server = http.createServer()
-        server.listen(3000)
         let client;
+        let server = http.createServer()
+        server.listen(PORT)
 
         return new Promise((resolve, reject) => {
             server.on('request', (req, res) => {
                 let url = new URL(req.url, `http://${req.headers.host}`)
+
                 if (url.pathname == '/login') {
                     let error;
                     if (url.searchParams.get('state') != auth_params.get('state')) {
@@ -147,6 +164,7 @@ class NexarClient {
                     } else if (!url.searchParams.has('code')) {
                         error = new Error('no code returned')
                     }
+
                     if (error) {
                         res.writeHead(400)
                         res.end(nexarPage('Authorization Failed!', error.message))
@@ -168,14 +186,6 @@ class NexarClient {
     }
 
     #getAccessTokenFromCode(id, secret, code_verifier, code) {
-        const options = {
-            hostname: 'identity.nexar.com',
-            path: '/connect/token',
-            method: 'POST',
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded"
-            }
-        }
         const data = new URLSearchParams({
             'grant_type': 'authorization_code',
             'client_id': id,
@@ -185,19 +195,11 @@ class NexarClient {
             'redirect_uri': REDIRECT_URI
         })
         
-        return this.#getRequest(options, data.toString())   
+        return getRequest(TOKEN_OPTIONS, data.toString())   
     }
 
     #getAccessToken(id, secret, scope) {
         if (scope == 'supply.domain') {        
-            const options = {
-                hostname: 'identity.nexar.com',
-                path: '/connect/token',
-                method: 'POST',
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded"
-                }
-            }
             const data = new URLSearchParams({
                 'grant_type': 'client_credentials',
                 'client_id': id,
@@ -205,7 +207,7 @@ class NexarClient {
                 'scope': scope
             })
 
-            return this.#getRequest(options, data.toString())
+            return getRequest(TOKEN_OPTIONS, data.toString())
         }
 
         let urlSafe = (buffer) => 
@@ -225,14 +227,6 @@ class NexarClient {
 
     #refreshToken(token) {
         if ('refresh_token' in token) {
-            const options = {
-                hostname: 'identity.nexar.com',
-                path: '/connect/token',
-                method: 'POST',
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded"
-                }
-            }
             const data = new URLSearchParams({
                 'grant_type': 'refresh_token',
                 'refresh_token': token.refresh_token,
@@ -241,7 +235,7 @@ class NexarClient {
                 'scope': this.#scope
             })
 
-            return this.#getRequest(options, data.toString())
+            return getRequest(TOKEN_OPTIONS, data.toString())
         }
 
         return this.#getAccessToken(this.#id, this.#secret, this.#scope)
@@ -254,9 +248,8 @@ class NexarClient {
         return this.#exp
             .then(exp => {
                 let now = new Date()
-                now.setMinutes(now.getMinutes() + 5)
             
-                if ((exp * 1000) < now.getTime()) {
+                if ((exp * 1000) < now.setMinutes(now.getMinutes() + 5)) {
                     //token is expired ... or will be in less than 5 minutes
                     this.#exp = undefined
                     return this.#accessToken
@@ -267,7 +260,14 @@ class NexarClient {
             })
     }
     
-    query(gqlQuery, variables) {
+    /**
+     * Make a request to the Nexar API
+     * @param {string} gqlQuery - graphQL string containing the query/mutation.
+     * @param {object} variables - key/value pairs for variables used in the gqlQuery.
+     * @returns {object} - The Nexar API response
+     */
+
+     query(gqlQuery, variables) {
         this.#accessToken = this.#accessToken || this.#getAccessToken(this.#id, this.#secret, this.#scope)
 
         return this.#checkTokenExp()
@@ -286,19 +286,31 @@ class NexarClient {
                     'variables': variables   
                 }
 
-                return this.#getRequest(options, JSON.stringify(data))
+                return getRequest(options, JSON.stringify(data))
             })
     }
+
+    /**
+     * Iterable for a graphQL Type implementing a node interface.
+     * NB: the query must include a variable to set the the cursor and the pageInfo field on the Type.
+     * @async
+     * @generator
+     * @param {string} pageKey - graphQL variable name for setting the cursor: desProjects(after: $pageKey).
+     * @param {function} pageSelect - return from data response the type with node interface: (data) => data.desProjects
+     * @yields {object} - a page of the graphQL Type implementing a node interface
+     */
 
     async * pageGen(gqlQuery, gqlVariables, pageKey, pageSelect) {
         let pageInfo = {'hasNextPage': true}
         while (pageInfo.hasNextPage) {
             const response = await this.query(gqlQuery, gqlVariables)
+
             pageInfo = pageSelect(response.data).pageInfo
-            gqlVariables[pageKey]= pageInfo.endCursor
+            gqlVariables[pageKey] = pageInfo.endCursor
+
             yield pageSelect(response.data).nodes
         }
     }
 }
 
-module.exports = {NexarClient, scope}
+module.exports = {NexarClient}

@@ -5,7 +5,7 @@ const rl = readline.createInterface({
   prompt: 'Search MPN: '
 });
 
-const nx = require('./nexarClient')
+const nx = require('../NexarClient/nexarClient')
 const clientId = process.env.NEXAR_CLIENT_ID ??
     (() => {throw new Error("Please set environment variable 'NEXAR_CLIENT_ID'")})()
 const clientSecret = process.env.NEXAR_CLIENT_SECRET ??
