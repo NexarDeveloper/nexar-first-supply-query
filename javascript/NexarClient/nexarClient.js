@@ -134,7 +134,7 @@ class NexarClient {
         this.#scope = scope
     }
 
-    set host(name) { this.hostName = name }
+    set host(name) { this.hostName = name.replace(/^https:\/\//,'').replace(/\/graphql$/, ''); }
 
     #getUserAuthCode(id, code_challenge, scope) {      
         let auth_request = new URL(AUTHORITY_URL)
@@ -243,7 +243,7 @@ class NexarClient {
 
     #checkTokenExp() {
         this.#exp = this.#exp ||
-            this.#accessToken.then(token => { return decodeJWT(token.access_token)?.exp })
+            this.#accessToken.then(token => decodeJWT(token.access_token)?.exp )
 
         return this.#exp
             .then(exp => {
@@ -252,8 +252,8 @@ class NexarClient {
                 if ((exp * 1000) < now.setMinutes(now.getMinutes() + 5)) {
                     //token is expired ... or will be in less than 5 minutes
                     this.#exp = undefined
-                    return this.#accessToken
-                        .then(token => {return this.#refreshToken(token)})
+                    this.#accessToken = this.#accessToken
+                        .then(token => this.#refreshToken(token))
                 }
 
                 return this.#accessToken

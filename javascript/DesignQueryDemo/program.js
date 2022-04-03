@@ -36,6 +36,7 @@ const gqlQuery2 = `query Projects($url: String!, $end: String) {
 workspaces
     .then(async workspaces => {
         console.log(`projects for workspace: ${workspaces[0].name}`)
+        nexar.host = workspaces[0].location.apiServiceUrl
 
         let gqlVariables = {'url': workspaces[0].url}
         let projects = nexar.pageGen(gqlQuery2, gqlVariables, 'end', (data) => data.desProjects)
