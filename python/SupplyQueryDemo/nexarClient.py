@@ -1,26 +1,61 @@
 """Resources for making Nexar requests."""
-import os, requests, re
-from typing import Callable, Dict, Iterator
-from requests_toolbelt import MultipartEncoder
-from nexarToken import get_token
+import requests
+import base64
+import json
+import time
+from typing import Dict
 
 NEXAR_URL = "https://api.nexar.com/graphql"
-NEXAR_FILE_URL = "https://files.nexar.com/Upload/WorkflowAttachment"
+PROD_TOKEN_URL = "https://identity.nexar.com/connect/token"
 
+def get_token(client_id, client_secret):
+    """Return the Nexar token from the client_id and client_secret provided."""
+
+    if not client_id or not client_secret:
+        raise Exception("client_id and/or client_secret are empty")
+
+    token = {}
+    try:
+        token = requests.post(
+            url=PROD_TOKEN_URL,
+            data={
+                "grant_type": "client_credentials",
+                "client_id": client_id,
+                "client_secret": client_secret
+            },
+            allow_redirects=False,
+        ).json()
+
+    except Exception:
+        raise
+
+    return token
+def decodeJWT(token):
+    return json.loads(
+        (base64.urlsafe_b64decode(token.split(".")[1] + "==")).decode("utf-8")
+    )
 
 class NexarClient:
-    def __init__(self, *args) -> None:
+    def __init__(self, id, secret) -> None:
+        self.id = id
+        self.secret = secret
         self.s = requests.session()
-        if len(args) == 1:
-            token = args[0]
-        else:
-            token = get_token(args[0], args[1], ['supply.domain']).get('access_token')
-        self.s.headers.update({"token": token})
         self.s.keep_alive = False
+
+        self.token = get_token(id, secret)
+        self.s.headers.update({"token": self.token.get('access_token')})
+        self.exp = decodeJWT(self.token.get('access_token')).get('exp')
+
+    def check_exp(self):
+        if (self.exp < time.time() + 300):
+            self.token = get_token(self.id, self.secret)
+            self.s.headers.update({"token": self.token.get('access_token')})
+            self.exp = decodeJWT(self.token.get('access_token')).get('exp')
 
     def get_query(self, query: str, variables: Dict) -> dict:
         """Return Nexar response for the query."""
         try:
+            self.check_exp()
             r = self.s.post(
                 NEXAR_URL,
                 json={"query": query, "variables": variables},
@@ -36,52 +71,3 @@ class NexarClient:
             raise SystemExit
 
         return response["data"]
-
-    def upload_file(self, workspaceUrl: str, path: str, container: str) -> str:
-        """Return Nexar response for the file upload."""
-        try:
-            multipart_data = MultipartEncoder(
-                fields = {
-                    'file': (os.path.basename(path), open(path, 'rb'), 'text/plain'),
-                    'workspaceUrl': workspaceUrl,
-                    'container': container,
-                }
-            )
-
-            r = self.s.post(
-                NEXAR_FILE_URL,
-                data = multipart_data,
-                headers = {
-                    'Content-Type': multipart_data.content_type,
-                }
-            )
-
-        except Exception as e:
-            print(e)
-            raise Exception("Error while uploading file to Nexar")
-
-        return r.text
-
-    class Node:
-        def __init__(self, client, query: str, variables: Dict, f: Callable) -> None:
-            self.client = client
-            self.query = query
-            self.variables = variables
-            self.f = f
-            self.name = re.search("after[\s]*:[\s]*\$([\w]*)", query).group(1)
-
-        def __iter__(self) -> Iterator:
-            self.pageInfo = {"hasNextPage": True}
-            return self
- 
-        def __next__(self):
-            if (not self.pageInfo["hasNextPage"]): raise StopIteration
-
-            data = self.client.get_query(self.query, self.variables)
-
-            self.pageInfo = self.f(data)["pageInfo"]
-            self.variables[self.name] = self.pageInfo["endCursor"]
-            return self.f(data)["nodes"]
-
-    def NodeIter(self, query: str, variables: dict, f: Callable) -> Iterator:
-        return NexarClient.Node(self, query, variables, f)

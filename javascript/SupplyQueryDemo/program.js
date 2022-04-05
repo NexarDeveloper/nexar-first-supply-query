@@ -1,10 +1,3 @@
-const readline = require('readline');
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
-  prompt: 'Search MPN: '
-});
-
 const nx = require('../NexarClient/nexarClient')
 const clientId = process.env.NEXAR_CLIENT_ID ??
     (() => {throw new Error("Please set environment variable 'NEXAR_CLIENT_ID'")})()
@@ -26,7 +19,14 @@ const gqlQuery = `query Search($mpn: String!) {
     }
   }`
 
-rl.on('line', async (MPN) => {
+  const readline = require('readline');
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+    prompt: 'Search MPN: '
+  });
+  
+  rl.on('line', async (MPN) => {
     if (!MPN.length) {
         rl.close()
         return
