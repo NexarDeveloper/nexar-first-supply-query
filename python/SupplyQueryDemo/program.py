@@ -12,11 +12,24 @@ query Search($mpn: String!) {
           manufacturer {
             name
           }
+          specs {
+            attribute {
+              shortname
+            }
+            value
+          }
         }
       }
     }
   }
 '''
+
+def getLifecycleStatus(specs):
+    if specs:
+        lifecycleSpec = [i for (i) in specs if i.get('attribute',{}).get('shortname') == 'lifecyclestatus']
+        if len(lifecycleSpec) > 0:
+            return lifecycleSpec[0].get('value',{})
+    return ''
 
 if __name__ == '__main__':
 
@@ -40,6 +53,7 @@ if __name__ == '__main__':
                 print(f'MPN: {it.get("part",{}).get("mpn")}')
                 print(f'Description: {it.get("part",{}).get("shortDescription")}')
                 print(f'Manufacturer: {it.get("part",{}).get("manufacturer",{}).get("name")}')
+                print(f'Lifecycle Status: {getLifecycleStatus(it.get("part",{}).get("specs",{}))}')
                 print()
         else:
             print('Sorry, no parts found')
