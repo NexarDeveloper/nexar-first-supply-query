@@ -14,6 +14,12 @@ const gqlQuery = `query Search($mpn: String!) {
           manufacturer {
             name
           }
+          specs {
+            attribute {
+                shortname
+            }
+            value
+          }
         }
       }
     }
@@ -43,11 +49,18 @@ const gqlQuery = `query Search($mpn: String!) {
         return
     }
 
+  // get lifecycle status
+  function getLifecycleStatus(specs) {
+    const spec = specs.find(x => x?.attribute?.shortname === "lifecyclestatus")
+    return spec?.value ?? ""
+  }
+
     // print the results
     for (const it of results) {
         console.log(`MPN: ${it?.part?.mpn}`)
         console.log(`Desciption: ${it?.part?.shortDescription}`)
         console.log(`Manufacturer: ${it?.part?.manufacturer?.name}`)
+        console.log(`Lifecycle Status: ${getLifecycleStatus(it?.part?.specs)}`)
         console.log();
     }    
     rl.prompt()
