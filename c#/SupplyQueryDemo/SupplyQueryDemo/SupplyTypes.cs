@@ -45,11 +45,29 @@ namespace SupplyQueryDemo
 
         [JsonProperty("manufacturer")]
         public Manufacturer? Manufacturer { get; set; }
+
+        [JsonProperty("specs")]
+        public List<Spec>? Specs { get; set; }
     }
 
     internal class Manufacturer
     {
         [JsonProperty("name")]
         public string? Name { get; set; }
+    }
+
+    internal class Spec
+    {
+        [JsonProperty("attribute")]
+        public Attribute? Attribute { get; set; }
+
+        [JsonProperty("value")]
+        public string? Value { get; set; }
+    }
+
+    internal class Attribute
+    {
+        [JsonProperty("shortname")]
+        public string? ShortName { get; set; }
     }
 }
