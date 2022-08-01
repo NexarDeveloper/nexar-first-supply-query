@@ -10,6 +10,12 @@ query Search($mpn: String!) {
         manufacturer {
           name
         }
+        specs {
+          attribute {
+            shortname
+          }
+          value
+        }
       }
     }
   }
@@ -45,12 +51,20 @@ while (true)
         continue;
     }
 
+    // get lifecycle status
+    string GetLifecycleStatus(List<Spec>? specs)
+    {
+        Spec? spec = specs?.FirstOrDefault(x => x.Attribute?.ShortName == "lifecyclestatus");
+        return spec?.Value ?? string.Empty;
+    }
+
     // print the results
     foreach (var it in result.Data.SupSearchMpn.Results)
     {
         Console.WriteLine($"MPN: {it?.Part?.Mpn}");
         Console.WriteLine($"Desciption: {it?.Part?.ShortDescription}");
         Console.WriteLine($"Manufacturer: {it?.Part?.Manufacturer?.Name}");
+        Console.WriteLine($"Lifecycle Status: {GetLifecycleStatus(it?.Part?.Specs)}");
         Console.WriteLine();
     }
 }
