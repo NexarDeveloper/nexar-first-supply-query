@@ -2,7 +2,7 @@ const { URLSearchParams } = require("url");
 const https = require("https");
 
 const TOKEN_OPTIONS = {
-  hostname: "identity.nexaruat.com",
+  hostname: "identity.nexar.com",
   path: "/connect/token",
   method: "POST",
   headers: {
@@ -59,7 +59,7 @@ class NexarClient {
   #exp;
   #id;
   #secret;
-  hostName = "api.nexaruat.com";
+  hostName = "api.nexar.com";
 
   /**
    * Client for the Nexar API to manage authorization and requests.
