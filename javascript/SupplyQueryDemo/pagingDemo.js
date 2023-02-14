@@ -45,30 +45,40 @@ rl.on("line", async (search) => {
     return;
   }
 
-  var pages = {};
-  var cursor = 0;
+  async function runQuery() {
+    let queryResults = [];
+    let cursor = 0;
+    let hasMoreResults = true;
 
-  function getPage(hasNextPage) {
-    if (hasNextPage) {
-      nexar
+    while (hasMoreResults) {
+      await nexar
         .query(gqlQuery, { search: search, start: cursor })
         .then(function (response) {
           cursor += response.data.supSearch.results.length;
-          pages[cursor] = response.data.supSearch.results;
-          getPage(response.data.supSearch.hits > cursor && 1000 > cursor);
+          for (result of response.data.supSearch.results) {
+            queryResults.push(result);
+          }
+          hasMoreResults =
+            response.data.supSearch.hits > cursor && 1000 > cursor;
         })
         .catch((err) => console.log(err));
-    } else {
-      const data = [].concat.apply([], Object.values(pages));
-      for (const it of data) {
+    }
+
+    return queryResults;
+  }
+
+  runQuery()
+    .then(function (results) {
+      for (const it of results) {
         console.log(`MPN: ${it?.part?.mpn}`);
-        console.log(`Desciption: ${it?.part?.shortDescription}`);
+        console.log(`Description: ${it?.part?.shortDescription}`);
         console.log(`Manufacturer: ${it?.part?.manufacturer?.name}`);
         console.log();
       }
+
       rl.prompt();
-    }
-  }
-  getPage(true);
+    })
+    .catch((err) => console.log(err));
 });
+
 rl.prompt();

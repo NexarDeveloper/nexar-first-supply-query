@@ -66,7 +66,7 @@ rl.on("line", async (MPN) => {
   // print the results
   for (const it of results) {
     console.log(`MPN: ${it?.part?.mpn}`);
-    console.log(`Desciption: ${it?.part?.shortDescription}`);
+    console.log(`Description: ${it?.part?.shortDescription}`);
     console.log(`Manufacturer: ${it?.part?.manufacturer?.name}`);
     console.log(`Lifecycle Status: ${getLifecycleStatus(it?.part?.specs)}`);
     console.log();
