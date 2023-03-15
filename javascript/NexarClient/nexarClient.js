@@ -30,7 +30,7 @@ function getRequest(options, data) {
           "Request Failed.\n" +
             `Status Code: ${res.statusCode} ${res.statusMessage}`
         );
-      } else if (!/^application\/json/.test(contentType)) {
+      } else if (!/^application\/graphql-response|json/.test(contentType)) {
         error = new Error(
           "Invalid content-type.\n" +
             `Expected application/json but received ${contentType}`
