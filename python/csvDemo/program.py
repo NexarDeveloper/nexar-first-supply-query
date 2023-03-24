@@ -44,7 +44,7 @@ if __name__ == "__main__":
 
     queries = []
     for mpn in mpns:
-        queries += [{"start": 1, "limit": 1, "mpn": mpn}]
+        queries += [{"start": 0, "limit": 1, "mpn": mpn}]
 
     variables = {
         "queries": queries
