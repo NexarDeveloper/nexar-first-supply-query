@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using Nexar.Client.Token;
 using System.Net.Http.Headers;
 using System.Text;
@@ -29,7 +29,7 @@ namespace SupplyQueryDemo
             };
         }
 
-        public async Task<Response> RunQueryAsync(Request request)
+        public async Task<Response?> RunQueryAsync(Request request)
         {
             // for another way of running GraphQL queries, see the related demo at:
             // https://github.com/NexarDeveloper/nexar-templates/tree/main/nexar-console-supply
@@ -38,7 +38,7 @@ namespace SupplyQueryDemo
             HttpResponseMessage httResponse = await httpClient.PostAsync(httpClient.BaseAddress, new StringContent(requestString, Encoding.UTF8, "application/json"));
             httResponse.EnsureSuccessStatusCode();
             string responseString = await httResponse.Content.ReadAsStringAsync();
-            Response response = JsonConvert.DeserializeObject<Response>(responseString);
+            Response? response = JsonConvert.DeserializeObject<Response>(responseString);
             return response;
         }
 
