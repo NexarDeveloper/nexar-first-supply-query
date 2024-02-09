@@ -41,10 +41,10 @@ while (true)
         Query = Query,
         Variables = new Dictionary<string, object> { { "mpn", mpn } }
     };
-    Response result = await supplyClient.RunQueryAsync(request);
+    Response? result = await supplyClient.RunQueryAsync(request);
 
     // check if no results
-    if (result.Data?.SupSearchMpn?.Results == null || result.Data.SupSearchMpn.Results.Count == 0)
+    if (result?.Data?.SupSearchMpn?.Results == null || result.Data.SupSearchMpn.Results.Count == 0)
     {
         Console.WriteLine("Sorry, no parts found");
         Console.WriteLine();
@@ -68,4 +68,3 @@ while (true)
         Console.WriteLine();
     }
 }
-

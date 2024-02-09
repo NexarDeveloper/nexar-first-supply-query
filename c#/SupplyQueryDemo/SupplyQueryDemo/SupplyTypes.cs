@@ -1,73 +1,73 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
 
 namespace SupplyQueryDemo
 {
     internal class Request
     {
-        [JsonProperty("query")]
+        [JsonPropertyName("query")]
         public string? Query { get; set; }
 
-        [JsonProperty("variables")]
+        [JsonPropertyName("variables")]
         public Dictionary<string, object>? Variables { get; set; }
     }
 
     internal class Response
     {
-        [JsonProperty("data")]
+        [JsonPropertyName("data")]
         public Data? Data { get; set; }
     }
 
     internal class Data
     {
-        [JsonProperty("supSearchMpn")]
+        [JsonPropertyName("supSearchMpn")]
         public SupSearchMpn? SupSearchMpn { get; set; }
     }
 
     internal class SupSearchMpn
     {
-        [JsonProperty("results")]
+        [JsonPropertyName("results")]
         public List<Result>? Results { get; set; }
     }
 
     internal class Result
     {
-        [JsonProperty("part")]
+        [JsonPropertyName("part")]
         public Part? Part { get; set; }
     }
 
     internal class Part
     {
-        [JsonProperty("mpn")]
+        [JsonPropertyName("mpn")]
         public string? Mpn { get; set; }
 
-        [JsonProperty("shortDescription")]
+        [JsonPropertyName("shortDescription")]
         public string? ShortDescription { get; set; }
 
-        [JsonProperty("manufacturer")]
+        [JsonPropertyName("manufacturer")]
         public Manufacturer? Manufacturer { get; set; }
 
-        [JsonProperty("specs")]
+        [JsonPropertyName("specs")]
         public List<Spec>? Specs { get; set; }
     }
 
     internal class Manufacturer
     {
-        [JsonProperty("name")]
+        [JsonPropertyName("name")]
         public string? Name { get; set; }
     }
 
     internal class Spec
     {
-        [JsonProperty("attribute")]
+        [JsonPropertyName("attribute")]
         public Attribute? Attribute { get; set; }
 
-        [JsonProperty("value")]
+        [JsonPropertyName("value")]
         public string? Value { get; set; }
     }
 
     internal class Attribute
     {
-        [JsonProperty("shortname")]
+        [JsonPropertyName("shortname")]
         public string? ShortName { get; set; }
     }
 }

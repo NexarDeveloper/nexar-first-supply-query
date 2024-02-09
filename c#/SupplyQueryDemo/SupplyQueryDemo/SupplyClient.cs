@@ -1,7 +1,7 @@
-using Newtonsoft.Json;
 using Nexar.Client.Token;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Text.Json;
 
 namespace SupplyQueryDemo
 {
@@ -34,11 +34,11 @@ namespace SupplyQueryDemo
             // for another way of running GraphQL queries, see the related demo at:
             // https://github.com/NexarDeveloper/nexar-templates/tree/main/nexar-console-supply
             await EnsureValidTokenAsync();
-            string requestString = JsonConvert.SerializeObject(request);
+            string requestString = JsonSerializer.Serialize(request);
             HttpResponseMessage httResponse = await httpClient.PostAsync(httpClient.BaseAddress, new StringContent(requestString, Encoding.UTF8, "application/json"));
             httResponse.EnsureSuccessStatusCode();
             string responseString = await httResponse.Content.ReadAsStringAsync();
-            Response? response = JsonConvert.DeserializeObject<Response>(responseString);
+            Response? response = JsonSerializer.Deserialize<Response?>(responseString);
             return response;
         }
 
