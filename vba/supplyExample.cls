@@ -7,7 +7,7 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = True
-Sub SendGraphQLQueryWriteToCell()
+Sub runSupplyExample()
 
     ' Declare necessary objects and variables
     Dim httpRequest As Object
