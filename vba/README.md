@@ -18,7 +18,8 @@
 
 **If you do not have the developer ribbon, follow this [guide](https://support.microsoft.com/en-gb/office/show-the-developer-tab-e1192344-5e56-4d45-931b-e5fd9bea2d45#:~:text=On%20the%20File%20tab%2C%20go,select%20the%20Developer%20check%20box) to enable it**
 
-* Copy and paste your Nexar API key into the `apikey.txt` file. You can get this from [here](https://portal.nexar.com/).
+* Copy and paste your Nexar API access token into the `apikey.txt` file. You can get this from [here](https://portal.nexar.com/). Log in to your account and in the left hand panel select Apps > Your Application of Choice > Authorization > Generate Token
+See how to generate your access token here: https://support.nexar.com/support/solutions/articles/101000452406-application-access-token
 
 * Then click `Visual Basic` and open `Sheet1(Sheet1)`. This is where the code for getting supply data lives.
 
