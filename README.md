@@ -10,6 +10,19 @@ Use the application client ID and secret and set environment variables `NEXAR_CL
 ## Understanding these Examples
 
 Each of these examples are using a "nexarClient" or "supplyClient" class. This class provides the necessary functionality to retrieve tokens and then use them to query the API. Then there are example runnable files that use this client to perform a given query and then display the data.
+
+## More about the C# solution
+
+The C# solution includes two demos:
+- Search MPN query
+- MultiMatch query
+
+The MultiMatch query demo supports more features such as:
+- config flags (in `appsettings.json`) to control filters and input/output settings
+- using CSV file as input for batch queries (make sure to set `<INPUT_FILE>`)
+- generating Json files containing query results (make sure to set `<OUTPUT_DIRECTORY>`)
+- different types of MultiMatch queries
+
 ##
 ### Information: Use of Community-Created Java API Client
 

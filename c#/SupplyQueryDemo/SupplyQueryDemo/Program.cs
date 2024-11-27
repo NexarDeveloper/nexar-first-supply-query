@@ -1,70 +1,41 @@
-﻿using SupplyQueryDemo;
+﻿using SupplyQueryDemo.API;
+using SupplyQueryDemo.Demos;
+using Microsoft.Extensions.Configuration;
+using SupplyQueryDemo.Config;
 
-const string Query = @"
-query Search($mpn: String!) {
-  supSearchMpn(q: $mpn, limit: 2) {
-    results {
-      part {
-        mpn
-        shortDescription
-        manufacturer {
-          name
-        }
-        specs {
-          attribute {
-            shortname
-          }
-          value
-        }
-      }
-    }
-  }
-}";
+var builder = new ConfigurationBuilder()
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json", optional: false);
+
+IConfiguration config = builder.Build();
+var multimatchConfig = config.GetSection("MultiMatchQueryDemo").Get<MultiMatchQueryDemoConfig>();
 
 // assume Nexar client ID and secret are set as environment variables
-string clientId = Environment.GetEnvironmentVariable("NEXAR_CLIENT_ID") ?? throw new InvalidOperationException("Please set environment variable 'NEXAR_CLIENT_ID'");
-string clientSecret = Environment.GetEnvironmentVariable("NEXAR_CLIENT_SECRET") ?? throw new InvalidOperationException("Please set environment variable 'NEXAR_CLIENT_SECRET'");
-
+var clientId = Environment.GetEnvironmentVariable("NEXAR_CLIENT_ID") ?? throw new InvalidOperationException("Please set environment variable 'NEXAR_CLIENT_ID'");
+var clientSecret = Environment.GetEnvironmentVariable("NEXAR_CLIENT_SECRET") ?? throw new InvalidOperationException("Please set environment variable 'NEXAR_CLIENT_SECRET'");
 using SupplyClient supplyClient = new(clientId, clientSecret);
+
+MultiMatchQueryDemo? multiMatchQueryDemo = null;
+if (multimatchConfig != null)
+{
+    multiMatchQueryDemo = new MultiMatchQueryDemo(multimatchConfig, supplyClient);
+}
 
 while (true)
 {
-    // prompt for an MPN to search
-    Console.Write("Search MPN: ");
-    var mpn = Console.ReadLine();
-    if (string.IsNullOrEmpty(mpn))
-        return;
-
-    // run the query
-    Request request = new()
+    // prompt user to choose an option
+    Console.WriteLine("Please choose from the following options: ");
+    Console.WriteLine("\t(1) Search MPN");
+    Console.WriteLine("\t(2) Multi match");
+    
+    var option = Console.ReadLine();
+    switch (option)
     {
-        Query = Query,
-        Variables = new Dictionary<string, object> { { "mpn", mpn } }
-    };
-    Response? result = await supplyClient.RunQueryAsync(request);
-
-    // check if no results
-    if (result?.Data?.SupSearchMpn?.Results == null || result.Data.SupSearchMpn.Results.Count == 0)
-    {
-        Console.WriteLine("Sorry, no parts found");
-        Console.WriteLine();
-        continue;
-    }
-
-    // get lifecycle status
-    string GetLifecycleStatus(List<Spec>? specs)
-    {
-        Spec? spec = specs?.FirstOrDefault(x => x.Attribute?.ShortName == "lifecyclestatus");
-        return spec?.Value ?? string.Empty;
-    }
-
-    // print the results
-    foreach (var it in result.Data.SupSearchMpn.Results)
-    {
-        Console.WriteLine($"MPN: {it?.Part?.Mpn}");
-        Console.WriteLine($"Description: {it?.Part?.ShortDescription}");
-        Console.WriteLine($"Manufacturer: {it?.Part?.Manufacturer?.Name}");
-        Console.WriteLine($"Lifecycle Status: {GetLifecycleStatus(it?.Part?.Specs)}");
-        Console.WriteLine();
+        case "1":
+            await SearchMpnQueryDemo.Run(supplyClient);
+            break;
+        case "2":
+            await multiMatchQueryDemo?.Run()!;
+            break;
     }
 }
