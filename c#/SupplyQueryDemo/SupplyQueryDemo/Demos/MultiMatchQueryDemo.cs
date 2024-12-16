@@ -12,48 +12,6 @@ internal class MultiMatchQueryDemo
 {
     private readonly MultiMatchQueryDemoConfig _config;
     private readonly SupplyClient _supplyClient;
-    private const string DefaultQuery = @"
-                        query ArenaPtcDataMainQuery($manufacturer: String!, $mpn: String!)  {
-                          supMultiMatch(
-                            queries: <QUERIES_PLACEHOLDER>
-                            options: { requireAuthorizedSellers: true }
-                          ) {
-                            parts {
-                              mpn
-                              manufacturer {
-                                name
-                                homepageUrl
-                              }
-                              category {
-                                name
-                              }
-                              shortDescription
-                              medianPrice1000 {
-                                price
-                                currency
-                              }
-                              similarParts {
-                                name
-                                shortDescription
-                                manufacturer {
-                                  name
-                                }
-                              }
-                              bestDatasheet {
-                                name
-                                url
-                                createdAt
-                              }
-                              estimatedFactoryLeadDays
-                              specs {
-                                value
-                                attribute {
-                                  shortname
-                                }
-                              }
-                            }
-                          }
-                        }";
 
     internal MultiMatchQueryDemo(MultiMatchQueryDemoConfig config, SupplyClient supplyClient)
     {

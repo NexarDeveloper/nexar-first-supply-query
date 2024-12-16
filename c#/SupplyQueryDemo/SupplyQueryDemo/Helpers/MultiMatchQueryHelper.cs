@@ -27,6 +27,8 @@ public static class MultiMatchQueryHelper
                                 currency
                               }
                               similarParts {
+                                id
+                                mpn
                                 name
                                 shortDescription
                                 manufacturer {
@@ -101,6 +103,8 @@ public static class MultiMatchQueryHelper
                                 currency
                               }
                               similarParts {
+                                id
+                                mpn
                                 name
                                 shortDescription
                                 manufacturer {
